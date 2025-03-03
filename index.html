@@ -27,9 +27,9 @@
             <label for="words">Enter words (one per line):</label>
             <textarea id="words" rows="6" placeholder="apple&#10;banana&#10;cherry"></textarea>
         </div>
-        <!-- Option for spaces between letters -->
+        <!-- Option for showing spaces between letters -->
         <div class="control-group">
-            <label for="spaces">Insert spaces between letters:</label>
+            <label for="spaces">Show spaces between letters:</label>
             <input type="checkbox" id="spaces" checked>
         </div>
         <!-- Dark mode toggle -->
@@ -39,9 +39,11 @@
         </div>
         <!-- Generate and Copy buttons -->
         <div class="control-group buttons">
-            <button id="generateBtn">Generate Word Search</button>
+            <button id="generateBtn" disabled>Generate Word Search</button>
             <button id="copyBtn">Copy Grid</button>
         </div>
+        <!-- Warning messages -->
+        <div id="warnings" class="warning"></div>
     </section>
 
     <!-- Output areas for the grid -->

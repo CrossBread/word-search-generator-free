@@ -1,5 +1,11 @@
-﻿// List of profane words to check (add more words as needed)
-const profaneWords = ["DAMN", "HELL"]; // all uppercase for comparison
+﻿// Global variables
+let grid = [];
+let wordPositions = []; // stores strings "r,c" for each letter that is part of a word
+let blacklist = [];
+let currentRows = 0, currentCols = 0;
+
+// Global array to hold words that couldn't be placed
+let failedWords = [];
 
 // Possible directions for word placement (rowDelta, colDelta)
 const directions = [
@@ -16,17 +22,53 @@ const directions = [
 document.getElementById("generateBtn").addEventListener("click", generateWordSearch);
 document.getElementById("copyBtn").addEventListener("click", copyGrid);
 document.getElementById("darkMode").addEventListener("change", toggleDarkMode);
+document.getElementById("spaces").addEventListener("change", () => {
+  // Re-render the grid with or without spaces if a grid exists.
+  if (currentRows && currentCols) {
+    renderGrid(currentRows, currentCols, document.getElementById("spaces").checked);
+  }
+});
+document.getElementById("words").addEventListener("input", validateWordsInput);
 
-// Global grid variables
-let grid = [];
-let wordPositions = []; // stores objects: {row, col} for each letter that is part of a word
+// Disable Generate button if words box is empty
+function validateWordsInput() {
+  const wordsValue = document.getElementById("words").value.trim();
+  document.getElementById("generateBtn").disabled = wordsValue.length === 0;
+}
 
+// Load profanity blacklist from an external file.
+function loadBlacklist() {
+  fetch("blacklist.txt")
+    .then(response => response.text())
+    .then(text => {
+      // Assume one word per line; convert to uppercase.
+      blacklist = text.split("\n")
+                      .map(word => word.trim().toUpperCase())
+                      .filter(word => word.length > 0);
+    })
+    .catch(err => {
+      console.error("Failed to load blacklist.txt", err);
+      blacklist = []; // Fallback: empty blacklist
+    });
+}
+
+// Call loadBlacklist when the page loads.
+loadBlacklist();
+
+// Global function to generate word search
 function generateWordSearch() {
+  // Clear warnings
+  document.getElementById("warnings").textContent = "";
+  failedWords = [];
+
   // Get user inputs
   const rows = parseInt(document.getElementById("rows").value, 10);
   const cols = parseInt(document.getElementById("cols").value, 10);
+  currentRows = rows;
+  currentCols = cols;
+
   const wordsInput = document.getElementById("words").value;
-  const insertSpaces = document.getElementById("spaces").checked;
+  const showSpaces = document.getElementById("spaces").checked;
 
   // Create empty grid and clear word positions
   grid = Array.from({ length: rows }, () => Array(cols).fill(""));
@@ -37,22 +79,47 @@ function generateWordSearch() {
     .map(word => word.trim().toUpperCase())
     .filter(word => word.length > 0);
 
-  // Place each word in the grid randomly
+  // Calculate total letters in the word list
+  let totalLetters = words.reduce((sum, word) => sum + word.length, 0);
+  let gridCells = rows * cols;
+  let warnings = [];
+
+  if (totalLetters > gridCells) {
+    warnings.push("Warning: Total letters of words exceed available grid cells. Some words may not be placed.");
+  }
+  if (gridCells < 50) {
+    warnings.push("Warning: The grid is very small; generating a valid grid may be difficult.");
+  }
+
+  // Place each word in the grid randomly.
   words.forEach(word => {
-    placeWordInGrid(word, rows, cols);
+    if (!placeWordInGrid(word, rows, cols)) {
+      failedWords.push(word);
+    }
   });
+
+  // If any words failed to be placed, add a warning.
+  if (failedWords.length > 0) {
+    warnings.push("Warning: The following words could not be placed. Consider increasing the grid size or reducing the number of words: " + failedWords.join(", "));
+  }
+
+  // Display warnings if any.
+  if (warnings.length > 0) {
+    document.getElementById("warnings").innerHTML = warnings.join("<br>");
+  }
 
   // Fill in empty cells with random letters
   fillEmptyCells(rows, cols);
 
-  // Check and remove accidental profane words from the grid
+  // Check and remove accidental profane words from the grid (using blacklist)
   removeProfanity(rows, cols);
 
   // Render the grids
-  renderGrid(rows, cols, insertSpaces);
+  renderGrid(rows, cols, showSpaces);
 }
 
-// Attempt to place a word in the grid at random positions/directions
+// Attempt to place a word in the grid at random positions/directions.
+// Returns true if word was placed, false if not.
 function placeWordInGrid(word, rows, cols) {
   const maxAttempts = 100;
   let placed = false;
@@ -95,7 +162,7 @@ function placeWordInGrid(word, rows, cols) {
     }
     placed = true;
   }
-  // If word was not placed after many attempts, it is skipped.
+  return placed;
 }
 
 // Fill remaining empty grid cells with random letters A-Z.
@@ -110,9 +177,10 @@ function fillEmptyCells(rows, cols) {
   }
 }
 
-// Check rows and columns for accidental profane words and alter one letter to break them.
+// Check rows and columns for accidental profane words (using blacklist)
+// and alter one letter to break the profanity.
 function removeProfanity(rows, cols) {
-  // Helper function to replace a letter with a random one
+  // Helper function to replace a letter with a random one (ensuring it differs)
   function randomReplace(letter) {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let newLetter = letter;
@@ -125,15 +193,15 @@ function removeProfanity(rows, cols) {
   // Check horizontal (rows)
   for (let r = 0; r < rows; r++) {
     let rowStr = grid[r].join("");
-    profaneWords.forEach(profane => {
-      let idx = rowStr.indexOf(profane);
+    blacklist.forEach(badWord => {
+      let idx = rowStr.indexOf(badWord);
       while (idx !== -1) {
         // Replace one letter in the found profane segment
-        const replacePos = idx + Math.floor(Math.random() * profane.length);
+        const replacePos = idx + Math.floor(Math.random() * badWord.length);
         grid[r][replacePos] = randomReplace(grid[r][replacePos]);
         // Update row string and search again
         rowStr = grid[r].join("");
-        idx = rowStr.indexOf(profane);
+        idx = rowStr.indexOf(badWord);
       }
     });
   }
@@ -144,30 +212,31 @@ function removeProfanity(rows, cols) {
     for (let r = 0; r < rows; r++) {
       colStr += grid[r][c];
     }
-    profaneWords.forEach(profane => {
-      let idx = colStr.indexOf(profane);
+    blacklist.forEach(badWord => {
+      let idx = colStr.indexOf(badWord);
       while (idx !== -1) {
-        const replaceRow = idx + Math.floor(Math.random() * profane.length);
+        const replaceRow = idx + Math.floor(Math.random() * badWord.length);
         grid[replaceRow][c] = randomReplace(grid[replaceRow][c]);
         // Update column string and search again
         colStr = "";
         for (let r = 0; r < rows; r++) {
           colStr += grid[r][c];
         }
-        idx = colStr.indexOf(profane);
+        idx = colStr.indexOf(badWord);
       }
     });
   }
-
-  // Optionally, you could add diagonal checks here.
 }
 
 // Render the plain grid and the grid with revealed words.
-function renderGrid(rows, cols, insertSpaces) {
+function renderGrid(rows, cols, showSpaces) {
   const gridOutput = document.getElementById("gridOutput");
   const revealedOutput = document.getElementById("revealedOutput");
   let plainText = "";
   let revealedText = "";
+
+  // Choose separator based on the checkbox
+  const separator = showSpaces ? " " : "";
 
   for (let r = 0; r < rows; r++) {
     let rowPlain = [];
@@ -182,8 +251,6 @@ function renderGrid(rows, cols, insertSpaces) {
         rowRevealed.push(letter);
       }
     }
-    // Join letters with or without spaces as chosen by user.
-    const separator = insertSpaces ? " " : "";
     plainText += rowPlain.join(separator) + "\n";
     revealedText += rowRevealed.join(separator) + "\n";
   }
@@ -192,7 +259,7 @@ function renderGrid(rows, cols, insertSpaces) {
   revealedOutput.innerHTML = revealedText;
 }
 
-// Copy the plain grid text to clipboard.
+// Copy the plain grid text to clipboard, respecting the current spacing.
 function copyGrid() {
   const gridText = document.getElementById("gridOutput").textContent;
   navigator.clipboard.writeText(gridText).then(() => {

@@ -78,6 +78,21 @@ button:hover {
   overflow: auto;
 }
 
+/* Bold letters in the revealed output have a white background */
+#revealedOutput b {
+}
+
+/* Warning message styling */
+.warning {
+  color: #a94442;
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  padding: 0.5em;
+  border-radius: 4px;
+  margin-top: 1em;
+  text-align: center;
+}
+
 /* Responsive adjustments for itch.io hosting */
 @media (max-width: 600px) {
   body {
