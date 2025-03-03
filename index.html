@@ -9,7 +9,8 @@
 </head>
 <body>
 <header>
-    <h1>Royalty Free Word Search Generator (CC0 License)</h1>
+    <h1>Royalty Free Word Search Generator</h1>
+    <h3>CC0 License</h3>
 </header>
 <main>
     <section id="controls">
@@ -40,7 +41,8 @@
         <!-- Generate and Copy buttons -->
         <div class="control-group buttons">
             <button id="generateBtn" disabled>Generate Word Search</button>
-            <button id="copyBtn">Copy Grid</button>
+<!--            <button id="copyPuzzleBtn">Copy Puzzle</button>-->
+<!--            <button id="copyAnswersBtn">Copy Answers</button>-->
         </div>
         <!-- Warning messages -->
         <div id="warnings" class="warning"></div>
@@ -48,9 +50,9 @@
 
     <!-- Output areas for the grid -->
     <section id="outputs">
-        <h2>Word Search Grid</h2>
+        <h2>Word Search Puzzle</h2>
         <pre id="gridOutput" class="monospaced"></pre>
-        <h2>Word Search with Words Revealed</h2>
+        <h2>Word Search with Answers</h2>
         <pre id="revealedOutput" class="monospaced"></pre>
     </section>
 </main>

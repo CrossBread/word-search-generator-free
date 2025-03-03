@@ -20,7 +20,8 @@ const directions = [
 ];
 
 document.getElementById("generateBtn").addEventListener("click", generateWordSearch);
-document.getElementById("copyBtn").addEventListener("click", copyGrid);
+//document.getElementById("copyPuzzleBtn").addEventListener("click", copyPuzzle);
+//document.getElementById("copyAnswersBtn").addEventListener("click", copyAnswers);
 document.getElementById("darkMode").addEventListener("change", toggleDarkMode);
 document.getElementById("spaces").addEventListener("change", () => {
   // Re-render the grid with or without spaces if a grid exists.
@@ -259,14 +260,52 @@ function renderGrid(rows, cols, showSpaces) {
   revealedOutput.innerHTML = revealedText;
 }
 
-// Copy the plain grid text to clipboard, respecting the current spacing.
-function copyGrid() {
+// Copy the plain puzzle text (without formatting) to clipboard.
+function copyPuzzle() {
   const gridText = document.getElementById("gridOutput").textContent;
   navigator.clipboard.writeText(gridText).then(() => {
-    alert("Grid copied to clipboard!");
+    alert("Puzzle copied to clipboard!");
   }).catch(err => {
-    alert("Failed to copy grid.");
+    alert("Failed to copy puzzle.");
   });
+}
+
+// Copy the revealed grid's HTML (rich text) to clipboard so that bold formatting is preserved.
+function copyAnswers() {
+  const revealedOutput = document.getElementById("revealedOutput");
+  const htmlContent = revealedOutput.innerHTML;
+  const plainText = revealedOutput.textContent;
+
+  if (navigator.clipboard && navigator.clipboard.write) {
+    // Create a ClipboardItem with both HTML and plain text versions.
+    const data = new ClipboardItem({
+      "text/html": new Blob([htmlContent], { type: "text/html" }),
+      "text/plain": new Blob([plainText], { type: "text/plain" })
+    });
+    navigator.clipboard.write([data]).then(() => {
+      alert("Answers copied to clipboard with formatting!");
+    }).catch(err => {
+      console.error(err);
+      alert("Failed to copy answers with formatting.");
+    });
+  } else {
+    // Fallback for browsers that don't support the ClipboardItem API.
+    const tempElem = document.createElement("div");
+    tempElem.innerHTML = htmlContent;
+    document.body.appendChild(tempElem);
+    let range = document.createRange();
+    range.selectNodeContents(tempElem);
+    let selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    try {
+      document.execCommand("copy");
+      alert("Answers copied to clipboard with formatting!");
+    } catch (err) {
+      alert("Failed to copy answers with formatting.");
+    }
+    document.body.removeChild(tempElem);
+  }
 }
 
 // Toggle dark mode by adding or removing a class on the body.
