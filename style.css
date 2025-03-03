@@ -1,0 +1,90 @@
+﻿/* Light mode default colors */
+:root {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --accent-color: #0077cc;
+  --input-bg: #f9f9f9;
+}
+
+/* Dark mode overrides */
+body.dark-mode {
+  --background-color: #121212;
+  --text-color: #e0e0e0;
+  --accent-color: #0099ff;
+  --input-bg: #1e1e1e;
+}
+
+/* Basic reset and body styling */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 1em;
+  line-height: 1.6;
+}
+
+/* Container for controls and outputs */
+#controls, #outputs {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+}
+
+/* Control groups */
+.control-group {
+  margin-bottom: 1em;
+}
+.control-group label {
+  display: inline-block;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+.control-group input[type="number"],
+.control-group textarea {
+  width: 100%;
+  padding: 0.5em;
+  background-color: var(--input-bg);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  color: var(--text-color);
+}
+
+/* Buttons styling */
+.buttons {
+  text-align: center;
+}
+button {
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 0.75em 1.5em;
+  margin: 0.5em;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 1em;
+}
+button:hover {
+  opacity: 0.9;
+}
+
+/* Monospaced styling for grid outputs */
+.monospaced {
+  font-family: "Courier New", Courier, monospace;
+  background-color: var(--input-bg);
+  padding: 1em;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  overflow: auto;
+}
+
+/* Responsive adjustments for itch.io hosting */
+@media (max-width: 600px) {
+  body {
+    padding: 0.5em;
+  }
+  button {
+    width: 100%;
+    margin: 0.25em 0;
+  }
+}
