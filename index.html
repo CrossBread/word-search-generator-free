@@ -14,7 +14,7 @@
 </header>
 <main>
     <section id="controls">
-        <!-- Word search grid size inputs -->
+        <!-- Grid dimensions -->
         <div class="control-group">
             <label for="rows">Rows:</label>
             <input type="number" id="rows" min="5" max="50" value="10">
@@ -23,26 +23,34 @@
             <label for="cols">Columns:</label>
             <input type="number" id="cols" min="5" max="50" value="10">
         </div>
-        <!-- Textarea for list of words -->
+        <!-- Word list input -->
         <div class="control-group">
             <label for="words">Enter words (one per line):</label>
             <textarea id="words" rows="6" placeholder="apple&#10;banana&#10;cherry"></textarea>
         </div>
-        <!-- Option for showing spaces between letters -->
-        <div class="control-group">
-            <label for="spaces">Show spaces between letters:</label>
-            <input type="checkbox" id="spaces" checked>
-        </div>
-        <!-- Dark mode toggle -->
-        <div class="control-group">
-            <label for="darkMode">Dark Mode:</label>
-            <input type="checkbox" id="darkMode">
-        </div>
-        <!-- Generate and Copy buttons -->
+        <!-- Options section -->
+        <section id="options">
+            <h3>Options</h3>
+            <div class="control-group">
+                <label for="darkMode">Dark Mode:</label>
+                <input type="checkbox" id="darkMode">
+            </div>
+            <div class="control-group">
+                <label for="spaces">Show spaces between letters:</label>
+                <input type="checkbox" id="spaces" checked>
+            </div>
+            <div class="control-group">
+                <label for="allowDiagonals">Allow diagonals:</label>
+                <input type="checkbox" id="allowDiagonals" checked>
+            </div>
+            <div class="control-group">
+                <label for="allowReverse">Allow reverse words (right-to-left):</label>
+                <input type="checkbox" id="allowReverse" checked>
+            </div>
+        </section>
+        <!-- Generate button -->
         <div class="control-group buttons">
             <button id="generateBtn" disabled>Generate Word Search</button>
-<!--            <button id="copyPuzzleBtn">Copy Puzzle</button>-->
-<!--            <button id="copyAnswersBtn">Copy Answers</button>-->
         </div>
         <!-- Warning messages -->
         <div id="warnings" class="warning"></div>

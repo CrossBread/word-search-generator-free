@@ -68,6 +68,18 @@ button:hover {
   opacity: 0.9;
 }
 
+/* Options section styling */
+#options {
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 1em;
+  margin-bottom: 1em;
+}
+#options h3 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+}
+
 /* Monospaced styling for grid outputs */
 .monospaced {
   font-family: "Courier New", Courier, monospace;
@@ -78,7 +90,7 @@ button:hover {
   overflow: auto;
 }
 
-/* Bold letters in the revealed output have a white background */
+/* Bold letters in the revealed output background */
 #revealedOutput b {
 }
 

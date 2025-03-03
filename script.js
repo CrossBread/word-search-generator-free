@@ -7,29 +7,18 @@ let currentRows = 0, currentCols = 0;
 // Global array to hold words that couldn't be placed
 let failedWords = [];
 
-// Possible directions for word placement (rowDelta, colDelta)
-const directions = [
-  { r: 0,  c: 1 },   // Right
-  { r: 0,  c: -1 },  // Left
-  { r: 1,  c: 0 },   // Down
-  { r: -1, c: 0 },   // Up
-  { r: 1,  c: 1 },   // Down-right
-  { r: 1,  c: -1 },  // Down-left
-  { r: -1, c: 1 },   // Up-right
-  { r: -1, c: -1 }   // Up-left
-];
+// Remove the fixed global directions array. Instead, get allowed directions on the fly.
 
+// Event listeners
 document.getElementById("generateBtn").addEventListener("click", generateWordSearch);
-//document.getElementById("copyPuzzleBtn").addEventListener("click", copyPuzzle);
-//document.getElementById("copyAnswersBtn").addEventListener("click", copyAnswers);
-document.getElementById("darkMode").addEventListener("change", toggleDarkMode);
+document.getElementById("words").addEventListener("input", validateWordsInput);
 document.getElementById("spaces").addEventListener("change", () => {
   // Re-render the grid with or without spaces if a grid exists.
   if (currentRows && currentCols) {
     renderGrid(currentRows, currentCols, document.getElementById("spaces").checked);
   }
 });
-document.getElementById("words").addEventListener("input", validateWordsInput);
+document.getElementById("darkMode").addEventListener("change", toggleDarkMode);
 
 // Disable Generate button if words box is empty
 function validateWordsInput() {
@@ -55,6 +44,31 @@ function loadBlacklist() {
 
 // Call loadBlacklist when the page loads.
 loadBlacklist();
+
+// Returns an array of allowed direction objects based on user options.
+function getAllowedDirections() {
+  let allowDiagonals = document.getElementById("allowDiagonals").checked;
+  let allowReverse = document.getElementById("allowReverse").checked;
+  let allDirections = [
+    { r: 0, c: 1 },    // Right
+    { r: 0, c: -1 },   // Left
+    { r: 1, c: 0 },    // Down
+    { r: -1, c: 0 },   // Up
+    { r: 1, c: 1 },    // Down-right
+    { r: 1, c: -1 },   // Down-left
+    { r: -1, c: 1 },   // Up-right
+    { r: -1, c: -1 }   // Up-left
+  ];
+  if (!allowDiagonals) {
+    // Remove any direction that is diagonal (both r and c nonzero)
+    allDirections = allDirections.filter(dir => !(dir.r !== 0 && dir.c !== 0));
+  }
+  if (!allowReverse) {
+    // Remove directions that go right-to-left (negative c values)
+    allDirections = allDirections.filter(dir => dir.c >= 0);
+  }
+  return allDirections;
+}
 
 // Global function to generate word search
 function generateWordSearch() {
@@ -92,9 +106,12 @@ function generateWordSearch() {
     warnings.push("Warning: The grid is very small; generating a valid grid may be difficult.");
   }
 
+  // Get allowed directions based on user options.
+  let allowedDirections = getAllowedDirections();
+
   // Place each word in the grid randomly.
   words.forEach(word => {
-    if (!placeWordInGrid(word, rows, cols)) {
+    if (!placeWordInGrid(word, rows, cols, allowedDirections)) {
       failedWords.push(word);
     }
   });
@@ -120,25 +137,25 @@ function generateWordSearch() {
 }
 
 // Attempt to place a word in the grid at random positions/directions.
-// Returns true if word was placed, false if not.
-function placeWordInGrid(word, rows, cols) {
+// Returns true if the word was placed, false otherwise.
+function placeWordInGrid(word, rows, cols, allowedDirections) {
   const maxAttempts = 100;
   let placed = false;
 
   for (let attempt = 0; attempt < maxAttempts && !placed; attempt++) {
-    // choose random starting point and direction
+    // Choose random starting point and random direction from allowedDirections.
     const startRow = Math.floor(Math.random() * rows);
     const startCol = Math.floor(Math.random() * cols);
-    const dir = directions[Math.floor(Math.random() * directions.length)];
+    const dir = allowedDirections[Math.floor(Math.random() * allowedDirections.length)];
 
-    // Check if word fits within bounds
+    // Check if word fits within bounds.
     const endRow = startRow + dir.r * (word.length - 1);
     const endCol = startCol + dir.c * (word.length - 1);
     if (endRow < 0 || endRow >= rows || endCol < 0 || endCol >= cols) {
       continue;
     }
 
-    // Check if path is clear or has matching letters (allows crossing)
+    // Check if path is clear or already matches the required letters (allows crossing)
     let validPlacement = true;
     let tempPositions = [];
     for (let i = 0; i < word.length; i++) {
@@ -154,11 +171,10 @@ function placeWordInGrid(word, rows, cols) {
 
     if (!validPlacement) continue;
 
-    // Place the word in the grid and record its letter positions
+    // Place the word in the grid and record its letter positions.
     for (let i = 0; i < word.length; i++) {
       const { r, c } = tempPositions[i];
       grid[r][c] = word[i];
-      // Mark the cell as part of a word (for the revealed grid)
       wordPositions.push(`${r},${c}`);
     }
     placed = true;
@@ -179,9 +195,8 @@ function fillEmptyCells(rows, cols) {
 }
 
 // Check rows and columns for accidental profane words (using blacklist)
-// and alter one letter to break the profanity.
+// and alter one letter to break any profanity.
 function removeProfanity(rows, cols) {
-  // Helper function to replace a letter with a random one (ensuring it differs)
   function randomReplace(letter) {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let newLetter = letter;
@@ -197,10 +212,8 @@ function removeProfanity(rows, cols) {
     blacklist.forEach(badWord => {
       let idx = rowStr.indexOf(badWord);
       while (idx !== -1) {
-        // Replace one letter in the found profane segment
         const replacePos = idx + Math.floor(Math.random() * badWord.length);
         grid[r][replacePos] = randomReplace(grid[r][replacePos]);
-        // Update row string and search again
         rowStr = grid[r].join("");
         idx = rowStr.indexOf(badWord);
       }
@@ -218,7 +231,6 @@ function removeProfanity(rows, cols) {
       while (idx !== -1) {
         const replaceRow = idx + Math.floor(Math.random() * badWord.length);
         grid[replaceRow][c] = randomReplace(grid[replaceRow][c]);
-        // Update column string and search again
         colStr = "";
         for (let r = 0; r < rows; r++) {
           colStr += grid[r][c];
@@ -227,16 +239,16 @@ function removeProfanity(rows, cols) {
       }
     });
   }
+  // (Optional: diagonal checks could be added if needed)
 }
 
-// Render the plain grid and the grid with revealed words.
+// Render the plain grid and the grid with revealed words (with bold for placed words).
 function renderGrid(rows, cols, showSpaces) {
   const gridOutput = document.getElementById("gridOutput");
   const revealedOutput = document.getElementById("revealedOutput");
   let plainText = "";
   let revealedText = "";
 
-  // Choose separator based on the checkbox
   const separator = showSpaces ? " " : "";
 
   for (let r = 0; r < rows; r++) {
@@ -245,7 +257,6 @@ function renderGrid(rows, cols, showSpaces) {
     for (let c = 0; c < cols; c++) {
       let letter = grid[r][c];
       rowPlain.push(letter);
-      // If the cell is part of a placed word, wrap it in bold tags.
       if (wordPositions.includes(`${r},${c}`)) {
         rowRevealed.push(`<b>${letter}</b>`);
       } else {
@@ -256,59 +267,10 @@ function renderGrid(rows, cols, showSpaces) {
     revealedText += rowRevealed.join(separator) + "\n";
   }
   gridOutput.textContent = plainText;
-  // Use innerHTML for revealed output to render <b> tags
   revealedOutput.innerHTML = revealedText;
 }
 
-// Copy the plain puzzle text (without formatting) to clipboard.
-function copyPuzzle() {
-  const gridText = document.getElementById("gridOutput").textContent;
-  navigator.clipboard.writeText(gridText).then(() => {
-    alert("Puzzle copied to clipboard!");
-  }).catch(err => {
-    alert("Failed to copy puzzle.");
-  });
-}
-
-// Copy the revealed grid's HTML (rich text) to clipboard so that bold formatting is preserved.
-function copyAnswers() {
-  const revealedOutput = document.getElementById("revealedOutput");
-  const htmlContent = revealedOutput.innerHTML;
-  const plainText = revealedOutput.textContent;
-
-  if (navigator.clipboard && navigator.clipboard.write) {
-    // Create a ClipboardItem with both HTML and plain text versions.
-    const data = new ClipboardItem({
-      "text/html": new Blob([htmlContent], { type: "text/html" }),
-      "text/plain": new Blob([plainText], { type: "text/plain" })
-    });
-    navigator.clipboard.write([data]).then(() => {
-      alert("Answers copied to clipboard with formatting!");
-    }).catch(err => {
-      console.error(err);
-      alert("Failed to copy answers with formatting.");
-    });
-  } else {
-    // Fallback for browsers that don't support the ClipboardItem API.
-    const tempElem = document.createElement("div");
-    tempElem.innerHTML = htmlContent;
-    document.body.appendChild(tempElem);
-    let range = document.createRange();
-    range.selectNodeContents(tempElem);
-    let selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    try {
-      document.execCommand("copy");
-      alert("Answers copied to clipboard with formatting!");
-    } catch (err) {
-      alert("Failed to copy answers with formatting.");
-    }
-    document.body.removeChild(tempElem);
-  }
-}
-
-// Toggle dark mode by adding or removing a class on the body.
+// Toggle dark mode by adding or removing the 'dark-mode' class on the body.
 function toggleDarkMode(event) {
   if (event.target.checked) {
     document.body.classList.add("dark-mode");
